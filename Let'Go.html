@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Family Safety</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f3f6fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.card {
+  background: white;
+  border-radius: 22px;
+  padding: 30px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.10);
+  text-align: center;
+}
+
+.icon {
+  font-size: 55px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 5px 0;
+  color: #111827;
+}
+
+.subtitle {
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 13px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.dark {
+  background: #111827;
+  color: white;
+}
+
+.status {
+  margin-top: 18px;
+  padding: 13px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 14px;
+}
+
+.success {
+  color: #15803d;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.pin-screen,
+.dashboard {
+  display: none;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 4px;
+}
+
+.location-box {
+  text-align: left;
+  background: #f8fafc;
+  border-radius: 15px;
+  padding: 18px;
+  margin-top: 20px;
+}
+
+.location-row {
+  margin-bottom: 14px;
+}
+
+.location-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #111827;
+  word-break: break-word;
+}
+
+.distance-box {
+  margin-top: 20px;
+  padding: 20px;
+  background: #eef4ff;
+  border-radius: 15px;
+}
+
+.distance-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.distance-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #2563eb;
+  margin-top: 5px;
+}
+
+.small {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- =========================
+     BROTHER SCREEN
+========================= -->
+
+<div class="card" id="homeScreen">
+
+  <div class="icon">📍</div>
+
+  <h1>Link</h1>
+
+  <p class="subtitle">
+    Hello User.
+  </p>
+
+  <button class="primary" id="startLocation">
+    📍 Let's Go
+  </button>
+
+  <div class="status" id="locationStatus">
+    Waiting.
+  </div>
+
+  <button class="dark" id="dashboardButton">
+    🔐 Dashboard
+  </button>
+
+  <p class="small">
+    Your browser will ask for permission.
+  </p>
+
+</div>
+
+
+<!-- =========================
+     PIN SCREEN
+========================= -->
+
+<div class="card pin-screen" id="pinScreen">
+
+  <div class="icon">🔐</div>
+
+  <h1>Dashboard</h1>
+
+  <p class="subtitle">
+    Enter your PIN to access the dashboard.
+  </p>
+
+  <input
+    type="password"
+    id="pinInput"
+    maxlength="4"
+    placeholder="••••"
+    inputmode="numeric"
+  >
+
+  <button class="primary" id="unlockButton">
+    Unlock Dashboard
+  </button>
+
+  <button class="dark" id="backHome">
+    ← Back
+  </button>
+
+  <div class="status error" id="pinStatus"></div>
+
+</div>
+
+
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<div class="card dashboard" id="dashboard">
+
+  <div class="icon">🛡️</div>
+
+  <h1>Family Dashboard</h1>
+
+  <p class="subtitle">
+    My Name
+  </p>
+
+
+  <div class="status" id="dashboardStatus">
+    Waiting for locations...
+  </div>
+
+
+  <!-- YOUR LOCATION -->
+
+  <div class="location-box">
+
+    <div class="location-row">
+      <div class="label">YOUR LOCATION</div>
+      <div class="value" id="yourLocation">
+        Waiting for GPS...
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- BROTHER LOCATION -->
+
+  <div class="location-box">
+
+    <div class="location-row">
+      <div class="label">User AREA</div>
+      <div class="value" id="areaName">
+        Waiting...
+      </div>
+    </div>
+
+    <div class="location-row">
+      <div class="label">User'S LATITUDE</div>
+      <div class="value" id="latitude">
+        —
+      </div>
+    </div>
+
+    <div class="location-row">
+      <div class="label">User'S LONGITUDE</div>
+      <div class="value" id="longitude">
+        —
+      </div>
+    </div>
+
+    <div class="location-row">
+      <div class="label">GPS ACCURACY</div>
+      <div class="value" id="accuracy">
+        —
+      </div>
+    </div>
+
+    <div class="location-row">
+      <div class="label">LAST UPDATED</div>
+      <div class="value" id="lastUpdated">
+        —
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- DISTANCE -->
+
+  <div class="distance-box">
+
+    <div class="distance-label">
+      DISTANCE BETWEEN YOU
+    </div>
+
+    <div class="distance-value" id="distance">
+      Calculating...
+    </div>
+
+  </div>
+
+
+  <button class="dark" id="lockDashboard">
+    🔒 Lock Dashboard
+  </button>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =====================================
+   FIREBASE CONFIG
+===================================== */
+
+const firebaseConfig = {
+
+  apiKey: "YOUR_API_KEY",
+
+  authDomain:
+    "YOUR_PROJECT.firebaseapp.com",
+
+  databaseURL:
+    "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+
+  projectId:
+    "YOUR_PROJECT",
+
+  storageBucket:
+    "YOUR_PROJECT.firebasestorage.app",
+
+  messagingSenderId:
+    "YOUR_SENDER_ID",
+
+  appId:
+    "YOUR_APP_ID"
+};
+
+
+firebase.initializeApp(firebaseConfig);
+
+const database =
+  firebase.database();
+
+
+/* =====================================
+   SETTINGS
+===================================== */
+
+const BROTHER_ID = "brother01";
+
+const DASHBOARD_PIN = "2009";
+
+
+/* =====================================
+   ELEMENTS
+===================================== */
+
+const homeScreen =
+  document.getElementById("homeScreen");
+
+const pinScreen =
+  document.getElementById("pinScreen");
+
+const dashboard =
+  document.getElementById("dashboard");
+
+const startLocation =
+  document.getElementById("startLocation");
+
+const locationStatus =
+  document.getElementById("locationStatus");
+
+const dashboardButton =
+  document.getElementById("dashboardButton");
+
+const unlockButton =
+  document.getElementById("unlockButton");
+
+const pinInput =
+  document.getElementById("pinInput");
+
+const pinStatus =
+  document.getElementById("pinStatus");
+
+const dashboardStatus =
+  document.getElementById("dashboardStatus");
+
+const areaName =
+  document.getElementById("areaName");
+
+const latitude =
+  document.getElementById("latitude");
+
+const longitude =
+  document.getElementById("longitude");
+
+const accuracy =
+  document.getElementById("accuracy");
+
+const lastUpdated =
+  document.getElementById("lastUpdated");
+
+const distance =
+  document.getElementById("distance");
+
+const yourLocation =
+  document.getElementById("yourLocation");
+
+
+/* =====================================
+   VARIABLES
+===================================== */
+
+let yourLatitude = null;
+let yourLongitude = null;
+
+let brotherLatitude = null;
+let brotherLongitude = null;
+
+
+/* =====================================
+   DISTANCE CALCULATION
+   Haversine Formula
+===================================== */
+
+function calculateDistance(
+  lat1,
+  lon1,
+  lat2,
+  lon2
+) {
+
+  const earthRadius = 6371;
+
+  const dLat =
+    (lat2 - lat1) *
+    Math.PI / 180;
+
+  const dLon =
+    (lon2 - lon1) *
+    Math.PI / 180;
+
+
+  const a =
+    Math.sin(dLat / 2) *
+    Math.sin(dLat / 2) +
+
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+
+  return earthRadius * c;
+}
+
+
+/* =====================================
+   UPDATE DISTANCE
+===================================== */
+
+function updateDistance() {
+
+  if (
+    yourLatitude === null ||
+    yourLongitude === null ||
+    brotherLatitude === null ||
+    brotherLongitude === null
+  ) {
+
+    distance.textContent =
+      "Waiting for GPS...";
+
+    return;
+  }
+
+
+  const km =
+    calculateDistance(
+      yourLatitude,
+      yourLongitude,
+      brotherLatitude,
+      brotherLongitude
+    );
+
+
+  if (km < 1) {
+
+    distance.textContent =
+      Math.round(km * 1000) + " metres";
+
+  } else {
+
+    distance.textContent =
+      km.toFixed(2) + " km";
+  }
+}
+
+
+/* =====================================
+   GET AREA NAME
+===================================== */
+
+async function getAreaName(lat, lon) {
+
+  try {
+
+    const url =
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Reverse geocoding failed"
+      );
+    }
+
+
+    const data =
+      await response.json();
+
+
+    return (
+      data.locality ||
+      data.city ||
+      data.principalSubdivision ||
+      data.countryName ||
+      "Area unavailable"
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    return "Area unavailable";
+  }
+}
+
+
+/* =====================================
+   SAVE BROTHER LOCATION
+===================================== */
+
+async function sendBrotherLocation(position) {
+
+  brotherLatitude =
+    position.coords.latitude;
+
+  brotherLongitude =
+    position.coords.longitude;
+
+
+  const acc =
+    position.coords.accuracy;
+
+
+  locationStatus.textContent =
+    "Finding area name...";
+
+
+  const area =
+    await getAreaName(
+      brotherLatitude,
+      brotherLongitude
+    );
+
+
+  const locationData = {
+
+    latitude:
+      brotherLatitude,
+
+    longitude:
+      brotherLongitude,
+
+    accuracy:
+      acc,
+
+    areaName:
+      area,
+
+    timestamp:
+      Date.now()
+  };
+
+
+  database
+    .ref(
+      "locations/" +
+      BROTHER_ID
+    )
+    .set(locationData)
+
+    .then(() => {
+
+      locationStatus.textContent =
+        "Location shared successfully ✓";
+
+      locationStatus.className =
+        "status success";
+
+    })
+
+    .catch(error => {
+
+      console.error(error);
+
+      locationStatus.textContent =
+        "Could not send location.";
+
+      locationStatus.className =
+        "status error";
+    });
+
+
+  updateDistance();
+}
+
+
+/* =====================================
+   BROTHER STARTS SHARING
+===================================== */
+
+startLocation.addEventListener(
+  "click",
+  () => {
+
+    if (!navigator.geolocation) {
+
+      locationStatus.textContent =
+        "GPS is not supported.";
+
+      locationStatus.className =
+        "status error";
+
+      return;
+    }
+
+
+    locationStatus.textContent =
+      "Requesting GPS permission...";
+
+
+    navigator.geolocation.getCurrentPosition(
+
+      position => {
+
+        sendBrotherLocation(position);
+
+
+        /*
+          Keep updating while the
+          page remains open.
+        */
+
+        navigator.geolocation.watchPosition(
+
+          newPosition => {
+
+            sendBrotherLocation(
+              newPosition
+            );
+
+          },
+
+          error => {
+
+            console.log(error);
+
+          },
+
+          {
+
+            enableHighAccuracy: true,
+
+            maximumAge: 0,
+
+            timeout: 30000
+          }
+        );
+
+      },
+
+      error => {
+
+        console.error(error);
+
+        locationStatus.textContent =
+          "Location permission was not allowed.";
+
+        locationStatus.className =
+          "status error";
+
+      },
+
+      {
+
+        enableHighAccuracy: true,
+
+        timeout: 30000,
+
+        maximumAge: 0
+      }
+    );
+
+  }
+);
+
+
+/* =====================================
+   OPEN DASHBOARD
+===================================== */
+
+dashboardButton.addEventListener(
+  "click",
+  () => {
+
+    homeScreen.style.display =
+      "none";
+
+    pinScreen.style.display =
+      "block";
+
+    pinInput.focus();
+  }
+);
+
+
+/* =====================================
+   UNLOCK
+===================================== */
+
+unlockButton.addEventListener(
+  "click",
+  () => {
+
+    if (
+      pinInput.value ===
+      DASHBOARD_PIN
+    ) {
+
+      pinScreen.style.display =
+        "none";
+
+      dashboard.style.display =
+        "block";
+
+      pinStatus.textContent = "";
+
+      startDashboard();
+
+      startYourLocation();
+
+    } else {
+
+      pinStatus.textContent =
+        "Incorrect PIN.";
+
+      pinInput.value = "";
+    }
+  }
+);
+
+
+/* =====================================
+   ENTER KEY
+===================================== */
+
+pinInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "Enter") {
+
+      unlockButton.click();
+    }
+  }
+);
+
+
+/* =====================================
+   START YOUR GPS
+===================================== */
+
+function startYourLocation() {
+
+  if (!navigator.geolocation) {
+
+    yourLocation.textContent =
+      "GPS unavailable";
+
+    return;
+  }
+
+
+  navigator.geolocation.watchPosition(
+
+    position => {
+
+      yourLatitude =
+        position.coords.latitude;
+
+      yourLongitude =
+        position.coords.longitude;
+
+
+      yourLocation.textContent =
+        `${yourLatitude.toFixed(8)}, ${yourLongitude.toFixed(8)}`;
+
+
+      updateDistance();
+    },
+
+    error => {
+
+      console.error(error);
+
+      yourLocation.textContent =
+        "GPS permission required";
+    },
+
+    {
+
+      enableHighAccuracy: true,
+
+      maximumAge: 0,
+
+      timeout: 30000
+    }
+  );
+}
+
+
+/* =====================================
+   DASHBOARD LISTENER
+===================================== */
+
+function startDashboard() {
+
+  database
+    .ref(
+      "locations/" +
+      BROTHER_ID
+    )
+    .on(
+      "value",
+      snapshot => {
+
+        const data =
+          snapshot.val();
+
+
+        if (!data) {
+
+          dashboardStatus.textContent =
+            "Waiting for brother's location...";
+
+          return;
+        }
+
+
+        brotherLatitude =
+          data.latitude;
+
+        brotherLongitude =
+          data.longitude;
+
+
+        areaName.textContent =
+          data.areaName ||
+          "Area unavailable";
+
+
+        latitude.textContent =
+          Number(data.latitude)
+            .toFixed(8);
+
+
+        longitude.textContent =
+          Number(data.longitude)
+            .toFixed(8);
+
+
+        accuracy.textContent =
+          data.accuracy
+            ? Math.round(data.accuracy)
+              + " metres"
+            : "—";
+
+
+        if (data.timestamp) {
+
+          lastUpdated.textContent =
+            new Date(
+              data.timestamp
+            ).toLocaleString();
+        }
+
+
+        dashboardStatus.textContent =
+          "Brother's location received ✓";
+
+        dashboardStatus.className =
+          "status success";
+
+
+        updateDistance();
+      }
+    );
+}
+
+
+/* =====================================
+   BACK HOME
+===================================== */
+
+backHome.addEventListener(
+  "click",
+  () => {
+
+    pinScreen.style.display =
+      "none";
+
+    homeScreen.style.display =
+      "block";
+
+    pinInput.value = "";
+
+    pinStatus.textContent = "";
+  }
+);
+
+
+/* =====================================
+   LOCK DASHBOARD
+===================================== */
+
+lockDashboard.addEventListener(
+  "click",
+  () => {
+
+    dashboard.style.display =
+      "none";
+
+    pinScreen.style.display =
+      "block";
+
+    pinInput.value = "";
+  }
+);
+
+</script>
+
+</body>
+</html>
